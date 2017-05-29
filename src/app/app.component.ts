@@ -1,8 +1,11 @@
 import { Component } from '@angular/core';
 // import 'here-js-api/scripts/mapsjs-core';
 // import 'here-js-api/scripts/mapsjs-service';
+// import * as d3 from 'd3';
+
 
 declare var H: any;
+declare var d3: any;
 
 @Component({
   selector: 'app-root',
@@ -44,9 +47,36 @@ export class AppComponent {
     new H.mapevents.Behavior(new H.mapevents.MapEvents(this.map));
     const ui = H.ui.UI.createDefault(this.map, defaultLayers);
 
-    let queryId = '5af379a97e254a158aae22938a6eb508';
+    let queryIdGpsTrace = '5af379a97e254a158aae22938a6eb508';
+    this.service.fetchQueryStats(queryIdGpsTrace, {
+      stats: [
+        {
+          column_stats: {
+            lat_avg: ['$min', '$max'],
+            lon_avg: ['$min', '$max']
+          },
+          dynamic: {
+            x: '$drop',
+            y: '$drop',
+            z: 15
+          }
+        }
+      ]
+    }).then(({ stats }) => {
+      console.log(stats);
+      const columnStats = stats[0].column_stats;
 
-    this.service.fetchQueryStats(queryId, {
+      this.map.setViewBounds(new H.geo.Rect(
+        columnStats.lat_avg.$max,
+        columnStats.lon_avg.$min,
+        columnStats.lat_avg.$min,
+        columnStats.lon_avg.$max
+      ), false);
+    });
+
+
+    let queryIdGps = '8ad75113b6b245649202ae2e1bf46099';
+    this.service.fetchQueryStats(queryIdGps, {
       stats: [
         {
           column_stats: {
@@ -75,7 +105,7 @@ export class AppComponent {
 
     const provider = new H.datalens.QueryTileProvider(
       this.service, {
-        queryId: queryId,
+        queryId: queryIdGps,
         tileParamNames: {
           x: 'x',
           y: 'y',
@@ -84,7 +114,7 @@ export class AppComponent {
       }
     );
 
-    const layer = new H.datalens.HeatmapLayer(
+    const layerGpsTrace = new H.datalens.HeatmapLayer(
       provider, {
         rowToTilePoint: function(row) {
           return {
@@ -94,10 +124,35 @@ export class AppComponent {
             count: 1
           };
         },
-        bandwidth: 1
+        bandwidth: 2,
+        colorScale: d3.scaleLinear().domain([0, 1]).range([
+          'rgba(255, 0, 0, 0)',
+          'rgba(255, 0, 0, 1)'
+        ])
       }
     );
 
-    this.map.addLayer(layer);
+    this.map.addLayer(layerGpsTrace);
+
+
+    const layerGps = new H.datalens.HeatmapLayer(
+      provider, {
+        rowToTilePoint: function(row) {
+          return {
+            x: row.tx,
+            y: row.ty,
+            value: row.count,
+            count: 1
+          };
+        },
+        bandwidth: .5,
+        colorScale: d3.scaleLinear().domain([0, 1]).range([
+          'rgba(0, 0, 255, 0)',
+          'rgba(0, 0, 255, 1)'
+        ])
+      }
+    );
+
+    this.map.addLayer(layerGps);
   }
 }
