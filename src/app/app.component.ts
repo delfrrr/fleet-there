@@ -28,19 +28,21 @@ export class AppComponent {
   private isGpsLayerVisible: boolean = true;
   private isGpsTraceLayerVisible: boolean = true;
   private markerGroup: H.map.Group;
+  private platform: H.service.Platform;
+  private router: any;
 
   ngOnInit() {
-    const platform = new H.service.Platform({
+    this.platform = new H.service.Platform({
       app_id: this.hereAppId,
       app_code: this.hereAppCode,
       useCIT: true,
       useHTTPS: true
     });
 
-    this.service = platform.configure(new H.datalens.Service());
+    this.service = this.platform.configure(new H.datalens.Service());
 
     const pixelRatio = devicePixelRatio > 1 ? 2 : 1;
-    const defaultLayers = platform.createDefaultLayers({ tileSize: 256 * pixelRatio });
+    const defaultLayers = this.platform.createDefaultLayers({ tileSize: 256 * pixelRatio });
     this.map = new H.Map(
       document.getElementById('map'),
       defaultLayers.normal.basenight,
@@ -185,6 +187,7 @@ export class AppComponent {
       { lat: 48.707982, lng: 9.169369 }
     ];
     this.drawMarkers(markers);
+    this.drawRoute(markers[0], markers[1]);
   }
 
   drawMarkers = (markers = []): void => {
@@ -202,6 +205,96 @@ export class AppComponent {
     }
 
     this.map.addObject(this.markerGroup);
+  }
+
+  drawRoute(location1, location2) {
+    // console.log('––> drawRoute: '+location1.title+' ––> '+location2.title);
+    let routingParameters = {
+      // The routing mode:
+      'mode': 'fastest;truck',
+      // The start point of the route:
+      'waypoint0': 'geo!'+location1.lat+','+location1.lng,
+      // The end point of the route:
+      'waypoint1': 'geo!'+location2.lat+','+location2.lng,
+      // To retrieve the shape of the route we choose the route
+      // representation mode 'display'
+      'representation': 'display',
+      'routeattributes': 'summary'
+    };
+
+    // Get an instance of the routing service:
+    this.router = this.platform.getRoutingService();
+
+    // Call calculateRoute() with the routing parameters,
+    // the callback and an error callback function (called if a
+    // communication error occurs):
+    this.router.calculateRoute(routingParameters, this.onRoutingResult,
+      function(error) {
+        console.error(error.message);
+      }
+    );
+  }
+
+  onRoutingResult = (result) => {
+    let route;
+    let routeShape;
+    // let startPoint;
+    // let endPoint;
+    let strip;
+
+    if(result.response.route) {
+      // Pick the first route from the response:
+      route = result.response.route[0];
+      // console.log(route);
+
+      // Pick the route's shape:
+      routeShape = route.shape;
+
+      // Create a strip to use as a point source for the route line
+      strip = new H.geo.Strip();
+
+      // Push all the points in the shape into the strip:
+      routeShape.forEach(function(point) {
+        let parts = point.split(',');
+        strip.pushLatLngAlt(parts[0], parts[1]);
+      });
+
+      // Retrieve the mapped positions of the requested waypoints:
+      // startPoint = route.waypoint[0].mappedPosition;
+      // endPoint = route.waypoint[1].mappedPosition;
+
+      // Create a polyline to display the route:
+      let routeLine = new H.map.Polyline(strip, {
+        style: { strokeColor: 'green', lineWidth: 3 }
+      });
+
+      // Create a marker for the start point:
+      // let startMarker = new H.map.Marker({
+      //   lat: startPoint.latitude,
+      //   lng: startPoint.longitude
+      // });
+
+      // // Create a marker for the end point:
+      // let endMarker = new H.map.Marker({
+      //   lat: endPoint.latitude,
+      //   lng: endPoint.longitude
+      // });
+
+      // Add the route polyline and the two markers to the map:
+      // this.map.addObjects([routeLine, startMarker, endMarker]);
+      this.map.addObjects([routeLine]);
+
+      // Set the map's viewport to make the whole route visible:
+      this.map.setViewBounds(routeLine.getBounds());
+
+      // output summary infos
+      if(route.summary){
+        console.log('distance: '+route.summary.distance/1000+' km');
+        console.log('travelTime: '+route.summary.travelTime/60 + ' minutes');
+        console.log('trafficTime: '+route.summary.trafficTime/60 + ' minutes');
+        // console.log('ETA: '+formatDate(getETA(route.summary.trafficTime), this.datePipe));
+      }
+    }
   }
 
   toggleLayer = (layerName): void => {
