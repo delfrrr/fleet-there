@@ -16,7 +16,11 @@ export class AppComponent {
   private hereAppId = 'QbpUpuHWnP4m9zJNq5sz';
   private hereAppCode = 'kbXjBIaQXC8lFg6QLEO4Ag';
   private service;
-  private map: any;
+  private map: H.Map;
+  private layerGps: H.datalens.HeatmapLayer;
+  private layerGpsTrace: H.datalens.HeatmapLayer;
+  private isGpsLayerVisible: boolean = true;
+  private isGpsTraceLayerVisible: boolean = true;
 
   ngOnInit() {
     const platform = new H.service.Platform({
@@ -114,7 +118,7 @@ export class AppComponent {
       }
     );
 
-    const layerGpsTrace = new H.datalens.HeatmapLayer(
+    this.layerGpsTrace = new H.datalens.HeatmapLayer(
       provider, {
         rowToTilePoint: function(row) {
           return {
@@ -125,6 +129,7 @@ export class AppComponent {
           };
         },
         bandwidth: 2,
+        // TODO: PR for typings
         colorScale: d3.scaleLinear().domain([0, 1]).range([
           'rgba(255, 0, 0, 0)',
           'rgba(255, 0, 0, 1)'
@@ -132,10 +137,10 @@ export class AppComponent {
       }
     );
 
-    this.map.addLayer(layerGpsTrace);
+    this.map.addLayer(this.layerGpsTrace);
 
 
-    const layerGps = new H.datalens.HeatmapLayer(
+    this.layerGps = new H.datalens.HeatmapLayer(
       provider, {
         rowToTilePoint: function(row) {
           return {
@@ -153,6 +158,25 @@ export class AppComponent {
       }
     );
 
-    this.map.addLayer(layerGps);
+    this.map.addLayer(this.layerGps);
+  }
+
+  toggleLayer = (layerName): void => {
+    if(layerName === 'gps'){
+      if(this.isGpsLayerVisible){
+        this.map.removeLayer(this.layerGps);
+      }
+      else {
+        this.map.addLayer(this.layerGps);
+      }
+    }
+    else if(layerName === 'gps-trace'){
+      if(this.isGpsTraceLayerVisible){
+        this.map.removeLayer(this.layerGpsTrace);
+      }
+      else {
+        this.map.addLayer(this.layerGpsTrace); 
+      }
+    }
   }
 }
