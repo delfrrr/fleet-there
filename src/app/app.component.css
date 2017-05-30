@@ -19,3 +19,13 @@
 	display: block;
 	width: 100%;
 }
+
+.marker {
+	position: absolute;
+	height: 8px;
+	width: 8px;
+	margin: -4px 0 0 -4px;
+	border-radius: 50%;
+	background: yellow;
+	cursor: pointer;
+}

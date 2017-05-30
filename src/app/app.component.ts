@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { ViewEncapsulation } from '@angular/core';
 
 // import 'here-js-api/scripts/mapsjs-core';
 // import 'here-js-api/scripts/mapsjs-service';
@@ -14,7 +15,8 @@ declare var d3: any;
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
+  encapsulation: ViewEncapsulation.None
 })
 export class AppComponent {
   private hereAppId = 'QbpUpuHWnP4m9zJNq5sz';
@@ -25,6 +27,7 @@ export class AppComponent {
   private layerGpsTrace: H.datalens.HeatmapLayer;
   private isGpsLayerVisible: boolean = true;
   private isGpsTraceLayerVisible: boolean = true;
+  private markerGroup: H.map.Group;
 
   ngOnInit() {
     const platform = new H.service.Platform({
@@ -174,6 +177,31 @@ export class AppComponent {
     );
 
     this.map.addLayer(this.layerGps);
+
+
+    // MARKERS
+    let markers = [
+      { lat: 52.5, lng: 13.4 },
+      { lat: 48.707982, lng: 9.169369 }
+    ];
+    this.drawMarkers(markers);
+  }
+
+  drawMarkers = (markers = []): void => {
+    this.markerGroup = new H.map.Group();
+
+    let markerHTML = '<div class="marker">'+
+      '<div class="marker__icon"></div>'+
+    '</div>';
+
+    let icon = new H.map.DomIcon(markerHTML);
+
+    for (let i = markers.length - 1; i >= 0; i--) {
+      let marker = new H.map.DomMarker({ lat: markers[i].lat, lng: markers[i].lng }, { icon: icon, data: { id: i } });
+      this.markerGroup.addObject(marker);
+    }
+
+    this.map.addObject(this.markerGroup);
   }
 
   toggleLayer = (layerName): void => {
