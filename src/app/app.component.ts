@@ -33,9 +33,11 @@ export class AppComponent {
   private router: any;
   private routeInfo: any;
   private showRouteInfo: boolean = false;
+  private showChart: boolean = false;
 
   private tmpRouteMarkers: any[] = [];
   private routeLines: any[] = [];
+  private chartData: any = {};
 
   ngOnInit() {
     this.platform = new H.service.Platform({
@@ -342,7 +344,11 @@ export class AppComponent {
       // Create a polyline to display the route:
       let routeLine = new H.map.Polyline(strip, {
         style: { strokeColor: 'green', lineWidth: 3 },
-        data: { routeInfo: this.transformRouteSummary(route.summary) }
+        data: {
+          routeInfo: this.transformRouteSummary(route.summary),
+          routeStart: route.waypoint[0].mappedPosition,
+          routeEnd: route.waypoint[1].mappedPosition
+        }
       });
 
       this.routeLines.push(routeLine);
@@ -382,13 +388,29 @@ export class AppComponent {
           for (var i = this.routeLines.length - 1; i >= 0; i--) {
             this.routeLines[i].setStyle({ strokeColor: 'green', lineWidth: 3 });
           }
-          
+
           this.routeInfo = e.target['getData']().routeInfo;
           this.showRouteInfo = true;
           e.target['setStyle']({ strokeColor: 'yellow', lineWidth: 3 });
+
+          this.chartData = {
+            locations: [
+              e.target['getData']().routeStart,
+              e.target['getData']().routeEnd
+            ],
+            travelTimes: [
+              e.target['getData']().routeInfo.trafficTime
+            ]
+          };
+
+          console.log(this.chartData);
+
+          this.showChart = true;
         }
         else {
           this.showRouteInfo = false;
+          this.showChart = false;
+
           // routeLine.setStyle({ strokeColor: 'green', lineWidth: 3 });
           for (var i = this.routeLines.length - 1; i >= 0; i--) {
             this.routeLines[i].setStyle({ strokeColor: 'green', lineWidth: 3 });

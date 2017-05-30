@@ -5,8 +5,46 @@
 	<button class="btn" (click)="toggleLayer('gps-trace')">Toggle GPS Trace Layer</button>
 </div>
 
-<div *ngIf="showRouteInfo" class="info">
-	Distance: {{routeInfo.distance}} km<br>
-	Travel Time: {{routeInfo.travelTime}} minutes<br>
-	Traffic Time: {{routeInfo.trafficTime}} minutes
+<div [ngClass]="{'info-box--active': showRouteInfo}" class="info-box">
+	Distance: {{routeInfo?.distance}} km<br>
+	Travel Time: {{routeInfo?.travelTime}} minutes<br>
+	Traffic Time: {{routeInfo?.trafficTime}} minutes
+</div>
+
+<div [ngClass]="{'chart-wrapper--active': showChart}" class="chart-wrapper">
+  <h1><span class="icon"></span>Route efficiency comparison</h1>
+  <div *ngIf="showChart" class="route-info">
+    <div class="info from-point">
+      <span>A</span>
+      <p class="address">{{chartData.locations[0].latitude}}, {{chartData.locations[0].longitude}}</p>
+    </div>
+    <div class="info to-point">
+      <span>B</span>
+      <p class="address">{{chartData.locations[1].latitude}}, {{chartData.locations[1].longitude}}</p>
+    </div>
+  </div>
+  <div class="route-line">
+    <span class="start"></span>
+    <span class="end"></span>
+  </div>
+  <div *ngIf="showChart" class="chart-content">
+    <ul class="bars">
+      <li class="bar here" style="width: 70%;">HERE Routing ETA</li>
+      <li class="bar driver" style="width: 90%;">Driver route #1</li>
+      <li class="bar driver" style="width: 80%;">Driver route #2</li>
+      <li class="bar driver" style="width: 60%;">Driver route #3</li>
+    </ul>
+    <ul class="gain-loss">
+      <li class="value here">&nbsp;</li>
+      <li class="value driver negative">+20min</li>
+      <li class="value driver negative">+10min</li>
+      <li class="value driver positive">-10min</li>
+    </ul>
+    <ul class="time">
+      <li class="value here">{{chartData.travelTimes[0]}} min</li>
+      <li class="value driver">2hr 56 min</li>
+      <li class="value driver">2hr 46 min</li>
+      <li class="value driver">2hr 26 min</li>
+    </ul>
+  </div>
 </div>
