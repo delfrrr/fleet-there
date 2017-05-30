@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ViewEncapsulation } from '@angular/core';
+import { isPrimitive } from 'util';
 
 // import 'here-js-api/scripts/mapsjs-core';
 // import 'here-js-api/scripts/mapsjs-service';
@@ -8,9 +9,28 @@ import { ViewEncapsulation } from '@angular/core';
 // import 'here-datalens-api/scripts/mapsjs-datalens';
 // import * as d3 from 'd3';
 
-
 declare var H: any;
 declare var d3: any;
+
+const dummyRoutes: any = [
+  [
+    { lat: 48.77555365415859, lng: 2.6028451929657876 },
+    { lat: 48.54260698776264, lng: 4.815320950556298 },
+    { lat: 49.49062499953427, lng: 9.02392805095431 },
+    { lat: 51.375858799144304, lng: 12.57061106533584 },
+    { lat: 52.37019017538252, lng: 16.956262536008268 }
+  ],
+  [
+    { lat: 48.77555365415859, lng: 2.6028451929657876 },
+    { lat: 50.13714016181161, lng: 7.924677518690515 },
+    { lat: 52.37019017538252, lng: 16.956262536008268 }
+  ],
+  [
+    { lat: 48.77555365415859, lng: 2.6028451929657876 },
+    { lat: 51.443631482079994, lng: 7.240006785216764 },
+    { lat: 52.37019017538252, lng: 16.956262536008268 }
+  ]
+];
 
 @Component({
   selector: 'app-root',
@@ -107,7 +127,7 @@ export class AppComponent {
 
     this.layerGpsTrace = new H.datalens.HeatmapLayer(
       providerGpsTrace, {
-        rowToTilePoint: function(row) {
+        rowToTilePoint: function (row) {
           return {
             x: row.tx,
             y: row.ty,
@@ -168,7 +188,7 @@ export class AppComponent {
     this.layerGps = new H.datalens.HeatmapLayer(
       providerGps, {
         // TODO: fix typings: row: number
-        rowToTilePoint: function(row) {
+        rowToTilePoint: function (row) {
           return {
             x: row.tx,
             y: row.ty,
@@ -187,7 +207,6 @@ export class AppComponent {
     this.map.addLayer(this.layerGps);
 
 
-
     // STOP POINTS
     let stopPointsIdGps = 'ead20d99ce5f4b14957e4f4775388468';
 
@@ -204,22 +223,22 @@ export class AppComponent {
 
     this.layerStopPoints = new H.datalens.ObjectLayer(
       providerStopPoints, {
-        rowToMapObject: function(cluster) {
+        rowToMapObject: function (cluster) {
           return new H.map.Marker(cluster.getPosition());
         },
         clustering: {
-          rowToDataPoint: function(row) {
+          rowToDataPoint: function (row) {
             return new H.clustering.DataPoint(row.latitude, row.longitude, 1);
           },
-          options: function() {
+          options: function () {
             return {
               eps: 25 * devicePixelRatio, //px
               minWeight: 20
             };
           }
         },
-        rowToStyle: function(cluster) {
-          const size = 32;
+        rowToStyle: function (cluster) {
+          const size = 24;
 
           let icon = H.datalens.ObjectLayer.createIcon([
             'svg',
@@ -239,15 +258,39 @@ export class AppComponent {
     );
 
     this.map.addEventListener('tap', (e) => {
-      // if(e.target instanceof H.map.Object){
-      if(e.target instanceof H.map.Marker){
-        // let target = e.target as H.map.Object;
+      if (e.target instanceof H.map.Marker) {
         console.log(e.target['getData']().getPosition());
+
         this.tmpRouteMarkers.push(e.target['getData']().getPosition());
 
-        if(this.tmpRouteMarkers.length === 2){
-          this.drawRoute(this.tmpRouteMarkers[0], this.tmpRouteMarkers[1]);
-          this.tmpRouteMarkers = [];
+        let markerSize = 32;
+        let markerColor = this.tmpRouteMarkers.length === 1 ? 'green' : 'red';
+
+        e.target['setIcon'](H.datalens.ObjectLayer.createIcon([
+          'svg',
+          {
+            viewBox: [-markerSize, -markerSize, 2 * markerSize, 2 * markerSize]
+          },
+          ['circle', {
+            cx: 0,
+            cy: 0,
+            r: markerSize,
+            fill: markerColor
+          }]
+        ], { size: markerSize }));
+
+        console.log(this.tmpRouteMarkers);
+
+        if (this.tmpRouteMarkers.length === 2) {
+          Promise.all([
+            this.drawRoute(dummyRoutes[0], '#52A3DB', false),
+            this.drawRoute(dummyRoutes[2], '#52A3DB', false),
+            this.drawRoute([this.tmpRouteMarkers[0], this.tmpRouteMarkers[1]], '#48dad0', true)
+          ]).then(() => {
+            this.map.removeLayer(this.layerGps);
+            this.showRouteInfo = true;
+            this.tmpRouteMarkers = [];
+          });
         }
       }
     });
@@ -274,42 +317,48 @@ export class AppComponent {
     let icon = new H.map.DomIcon(markerHTML);
 
     for (let i = markers.length - 1; i >= 0; i--) {
-      let marker = new H.map.DomMarker({ lat: markers[i].lat, lng: markers[i].lng }, { icon: icon, data: { id: i } });
+      let marker = new H.map.DomMarker({
+        lat: markers[i].lat,
+        lng: markers[i].lng
+      }, { icon: icon, data: { id: i } });
       this.markerGroup.addObject(marker);
     }
 
     this.map.addObject(this.markerGroup);
   }
 
-  drawRoute(location1, location2) {
-    // console.log('––> drawRoute: '+location1.title+' ––> '+location2.title);
-    let routingParameters = {
-      // The routing mode:
-      'mode': 'fastest;truck',
-      // The start point of the route:
-      'waypoint0': 'geo!' + location1.lat + ',' + location1.lng,
-      // The end point of the route:
-      'waypoint1': 'geo!' + location2.lat + ',' + location2.lng,
-      // To retrieve the shape of the route we choose the route
-      // representation mode 'display'
-      'representation': 'display',
-      'routeattributes': 'summary'
-    };
+  drawRoute(locations: any, color: string, primary: boolean) {
+    return new Promise((resolve, reject) => {
+      let routingParameters = {
+        // The routing mode:
+        'mode': 'fastest;truck',
+        // To retrieve the shape of the route we choose the route
+        // representation mode 'display'
+        'representation': 'display',
+        'routeattributes': 'summary'
+      };
 
-    // Get an instance of the routing service:
-    this.router = this.platform.getRoutingService();
+      locations.forEach((location, index) => {
+        routingParameters[`waypoint${ index }`] = 'geo!' + location.lat + ',' + location.lng;
+      });
 
-    // Call calculateRoute() with the routing parameters,
-    // the callback and an error callback function (called if a
-    // communication error occurs):
-    this.router.calculateRoute(routingParameters, this.onRoutingResult,
-      function(error) {
+      // Get an instance of the routing service:
+      this.router = this.platform.getRoutingService();
+
+      // Call calculateRoute() with the routing parameters,
+      // the callback and an error callback function (called if a
+      // communication error occurs):
+      this.router.calculateRoute(routingParameters, (result) => {
+        this.onRoutingResult(result, color, primary);
+        resolve();
+      }, (error) => {
         console.error(error.message);
-      }
-    );
+        reject();
+      });
+    });
   }
 
-  onRoutingResult = (result) => {
+  onRoutingResult = (result, color: string, primary) => {
     let route;
     let routeShape;
     // let startPoint;
@@ -330,7 +379,7 @@ export class AppComponent {
       strip = new H.geo.Strip();
 
       // Push all the points in the shape into the strip:
-      routeShape.forEach(function(point) {
+      routeShape.forEach(function (point) {
         let parts = point.split(',');
         strip.pushLatLngAlt(parts[0], parts[1]);
       });
@@ -341,9 +390,13 @@ export class AppComponent {
 
       // Create a polyline to display the route:
       let routeLine = new H.map.Polyline(strip, {
-        style: { strokeColor: 'green', lineWidth: 3 },
+        style: { strokeColor: color, lineWidth: primary ? 6 : 3 },
         data: { routeInfo: this.transformRouteSummary(route.summary) }
       });
+
+      if (primary) {
+        routeLine['setZIndex'](100);
+      }
 
       this.routeLines.push(routeLine);
 
@@ -367,7 +420,7 @@ export class AppComponent {
       // this.map.setViewBounds(routeLine.getBounds());
 
       // output summary infos
-      if (route.summary) {
+      if (route.summary && primary) {
         this.routeInfo = {
           distance: Math.ceil(route.summary.distance / 1000),
           travelTime: Math.ceil(route.summary.travelTime / 60),
@@ -377,24 +430,29 @@ export class AppComponent {
       }
 
 
-      this.map.addEventListener('tap', (e) => {
-        if (e.target instanceof H.map.Polyline) {
-          for (var i = this.routeLines.length - 1; i >= 0; i--) {
-            this.routeLines[i].setStyle({ strokeColor: 'green', lineWidth: 3 });
-          }
-          
-          this.routeInfo = e.target['getData']().routeInfo;
-          this.showRouteInfo = true;
-          e.target['setStyle']({ strokeColor: 'yellow', lineWidth: 3 });
-        }
-        else {
-          this.showRouteInfo = false;
-          // routeLine.setStyle({ strokeColor: 'green', lineWidth: 3 });
-          for (var i = this.routeLines.length - 1; i >= 0; i--) {
-            this.routeLines[i].setStyle({ strokeColor: 'green', lineWidth: 3 });
-          }
-        }
-      });
+      // this.map.addEventListener('tap', (e) => {
+      //   if (e.target instanceof H.map.Polyline) {
+      //     // for (var i = this.routeLines.length - 1; i >= 0; i--) {
+      //     //   this.routeLines[i].setStyle({ strokeColor: 'green', lineWidth: 3 });
+      //     // }
+      //
+      //     this.routeInfo = e.target['getData']().routeInfo;
+      //     this.showRouteInfo = true;
+      //
+      //     e.target['setZIndex'](100);
+      //     e.target['setStyle']({
+      //       strokeColor: 'yellow',
+      //       lineWidth: 5
+      //     });
+      //   }
+      //   else {
+      //     this.showRouteInfo = false;
+      //     // routeLine.setStyle({ strokeColor: 'green', lineWidth: 3 });
+      //     for (var i = this.routeLines.length - 1; i >= 0; i--) {
+      //       this.routeLines[i].setStyle({ strokeColor: 'green', lineWidth: 3 });
+      //     }
+      //   }
+      // });
     }
   }
 
@@ -429,3 +487,5 @@ export class AppComponent {
     }
   }
 }
+
+

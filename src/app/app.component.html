@@ -1,12 +1,50 @@
 <div id="map"></div>
 
-<div class="controls">
-	<button class="btn" (click)="toggleLayer('gps')">Toggle GPS Layer</button>
-	<button class="btn" (click)="toggleLayer('gps-trace')">Toggle GPS Trace Layer</button>
-</div>
+<!--<div class="controls">-->
+  <!--<button class="btn" (click)="toggleLayer('gps')">Toggle GPS Layer</button>-->
+  <!--<button class="btn" (click)="toggleLayer('gps-trace')">Toggle GPS Trace-->
+                                                         <!--Layer-->
+  <!--</button>-->
+<!--</div>-->
 
-<div *ngIf="showRouteInfo" class="info">
-	Distance: {{routeInfo.distance}} km<br>
-	Travel Time: {{routeInfo.travelTime}} minutes<br>
-	Traffic Time: {{routeInfo.trafficTime}} minutes
+<!--<div *ngIf="showRouteInfo" class="info">-->
+  <!--Distance: {{routeInfo.distance}} km<br>-->
+  <!--Travel Time: {{routeInfo.travelTime}} minutes<br>-->
+  <!--Traffic Time: {{routeInfo.trafficTime}} minutes-->
+<!--</div>-->
+
+
+
+<div class="chart-wrapper"
+     [class.visible]="showRouteInfo"
+>
+  <h1>Route efficiency comparison</h1>
+  <span class="icon"></span>
+  <div class="route-info">
+    <p class="distance">123 km</p>
+    <div class="info from-point">
+      <span class="label">A</span>
+      <p class="address">Fleetstraße 24, Vaihingen (Enz)</p>
+    </div>
+    <div class="info to-point">
+      <span class="label">B</span>
+      <p class="address">Daimler Werk II, Heilbronner Str. 24</p>
+    </div>
+  </div>
+  <div class="route-line">
+    <span class="dot start"><span class="icon"></span></span>
+    <span class="dot end"><span class="icon"></span></span>
+  </div>
+  <div class="chart-content">
+    <ul class="bars">
+      <li class="bar here" style="width: 70%;">HERE Routing ETA</li>
+      <li class="bar driver" style="width: 90%;">Driver route #1</li>
+      <li class="bar driver" style="width: 80%;">Driver route #2</li>
+    </ul>
+    <ul class="time">
+      <li class="value here">2hr 36min</li>
+      <li class="value driver">+ 20min</li>
+      <li class="value driver">+ 10min</li>
+    </ul>
+  </div>
 </div>
