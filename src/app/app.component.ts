@@ -44,9 +44,9 @@ export class AppComponent {
       }
     );
 
-    // window.addEventListener('resize', function() {
-    //     this.map.getViewPort().resize();
-    // });
+    window.addEventListener('resize', () => {
+      this.map.getViewPort().resize();
+    });
 
     new H.mapevents.Behavior(new H.mapevents.MapEvents(this.map));
     const ui = H.ui.UI.createDefault(this.map, defaultLayers);
