@@ -1,0 +1,104 @@
+{
+    "query": {
+        "dataset": "cfe98cd290584f668f34a8c453a06b68",
+        "metrics": [
+            "lat",
+            "lng",
+            "timestamp",
+            "tripId"
+        ],
+        "namespace": {
+            "lat": {
+                "source": [
+                    "column_4"
+                ]
+            },
+            "lng": {
+                "source": [
+                    "column_5"
+                ]
+            },
+            "timestamp": {
+                "source": [
+                    "column_3"
+                ]
+            },
+            "tripId": {
+                "source": [
+                    "column_1"
+                ]
+            },
+            "buffer": {
+                "source": [
+                    {
+                        "default": 0,
+                        "$input": "buffer"
+                    }
+                ]
+            },
+            "px": {
+                "source": [
+                    "lng",
+                    "z"
+                ],
+                "apply": [
+                    {
+                        "type": "transform",
+                        "fn": "lon_to_x"
+                    }
+                ]
+            },
+            "py": {
+                "source": [
+                    "lat",
+                    "z"
+                ],
+                "apply": [
+                    {
+                        "type": "transform",
+                        "fn": "lat_to_y"
+                    }
+                ]
+            },
+            "y": {
+                "source": [
+                    {
+                        "$input": "y"
+                    }
+                ]
+            },
+            "x": {
+                "source": [
+                    {
+                        "$input": "x"
+                    }
+                ]
+            },
+            "z": {
+                "source": [
+                    {
+                        "$input": "z"
+                    }
+                ]
+            },
+            "pixels": {
+                "source": [
+                    "px",
+                    "py"
+                ]
+            }
+        },
+        "filters": [
+            {
+                "pixels": {
+                    "$pixel_within_tile": [
+                        "x",
+                        "y",
+                        "buffer"
+                    ]
+                }
+            }
+        ]
+    },
+    "description": ""
+}

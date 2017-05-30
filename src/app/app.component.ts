@@ -189,7 +189,7 @@ export class AppComponent {
 
 
     // STOP POINTS
-    let stopPointsIdGps = 'ead20d99ce5f4b14957e4f4775388468';
+    let stopPointsIdGps = 'd0a42c53a31b48578101e7782c25517f';
 
     const providerStopPoints = new H.datalens.QueryTileProvider(
       this.service, {
@@ -209,7 +209,7 @@ export class AppComponent {
         },
         clustering: {
           rowToDataPoint: function(row) {
-            return new H.clustering.DataPoint(row.latitude, row.longitude, 1);
+            return new H.clustering.DataPoint(row.lat, row.lng, 1);
           },
           options: function() {
             return {
