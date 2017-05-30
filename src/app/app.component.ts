@@ -213,6 +213,23 @@ export class AppComponent {
               eps: 50 * devicePixelRatio //px
             };
           }
+        },
+        rowToStyle: function(cluster){
+            const size = 32;
+
+           let icon = H.datalens.ObjectLayer.createIcon([
+              'svg',
+              {
+                  viewBox: [-size, -size, 2 * size, 2 * size]
+              },
+              ['circle', {
+                  cx: 0,
+                  cy: 0,
+                  r: size,
+                  fill: 'orange'
+              }]
+          ], {size: size});
+          return {icon: icon};
         }
       }
     );
