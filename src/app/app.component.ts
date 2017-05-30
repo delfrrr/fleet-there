@@ -1,6 +1,10 @@
 import { Component } from '@angular/core';
+
 // import 'here-js-api/scripts/mapsjs-core';
 // import 'here-js-api/scripts/mapsjs-service';
+// import 'here-js-api/scripts/mapsjs-ui';
+// import 'here-js-api/scripts/mapsjs-mapevents';
+// import 'here-datalens-api/scripts/mapsjs-datalens';
 // import * as d3 from 'd3';
 
 
