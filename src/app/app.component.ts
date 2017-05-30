@@ -34,6 +34,9 @@ export class AppComponent {
   private routeInfo: any;
   private showRouteInfo: boolean = false;
 
+  private tmpRouteMarkers: any[] = [];
+  private routeLines: any[] = [];
+
   ngOnInit() {
     this.platform = new H.service.Platform({
       app_id: this.hereAppId,
@@ -143,12 +146,12 @@ export class AppComponent {
     }).then(({ stats }) => {
       const columnStats = stats[0].column_stats;
 
-      this.map.setViewBounds(new H.geo.Rect(
-        columnStats.lat_avg.$max,
-        columnStats.lon_avg.$min,
-        columnStats.lat_avg.$min,
-        columnStats.lon_avg.$max
-      ), false);
+      // this.map.setViewBounds(new H.geo.Rect(
+      //   columnStats.lat_avg.$max,
+      //   columnStats.lon_avg.$min,
+      //   columnStats.lat_avg.$min,
+      //   columnStats.lon_avg.$max
+      // ), false);
     });
 
     const providerGps = new H.datalens.QueryTileProvider(
@@ -201,57 +204,72 @@ export class AppComponent {
 
     this.layerStopPoints = new H.datalens.ObjectLayer(
       providerStopPoints, {
-        rowToMapObject: function(cluster){
+        rowToMapObject: function(cluster) {
           return new H.map.Marker(cluster.getPosition());
         },
         clustering: {
           rowToDataPoint: function(row) {
             return new H.clustering.DataPoint(row.latitude, row.longitude, 1);
           },
-          options: function(){
+          options: function() {
             return {
-              eps: 50 * devicePixelRatio //px
+              eps: 25 * devicePixelRatio, //px
+              minWeight: 20
             };
           }
         },
-        rowToStyle: function(cluster){
-            const size = 32;
+        rowToStyle: function(cluster) {
+          const size = 32;
 
-           let icon = H.datalens.ObjectLayer.createIcon([
-              'svg',
-              {
-                  viewBox: [-size, -size, 2 * size, 2 * size]
-              },
-              ['circle', {
-                  cx: 0,
-                  cy: 0,
-                  r: size,
-                  fill: 'orange'
-              }]
-          ], {size: size});
-          return {icon: icon};
+          let icon = H.datalens.ObjectLayer.createIcon([
+            'svg',
+            {
+              viewBox: [-size, -size, 2 * size, 2 * size]
+            },
+            ['circle', {
+              cx: 0,
+              cy: 0,
+              r: size,
+              fill: cluster.isCluster() ? 'orange' : 'transparent'
+            }]
+          ], { size: size });
+          return { icon: icon };
         }
       }
     );
+
+    this.map.addEventListener('tap', (e) => {
+      // if(e.target instanceof H.map.Object){
+      if(e.target instanceof H.map.Marker){
+        // let target = e.target as H.map.Object;
+        console.log(e.target['getData']().getPosition());
+        this.tmpRouteMarkers.push(e.target['getData']().getPosition());
+
+        if(this.tmpRouteMarkers.length === 2){
+          this.drawRoute(this.tmpRouteMarkers[0], this.tmpRouteMarkers[1]);
+          this.tmpRouteMarkers = [];
+        }
+      }
+    });
 
     this.map.addLayer(this.layerStopPoints);
 
 
     // MARKERS
-    let markers = [
-      { lat: 52.5, lng: 13.4 },
-      { lat: 48.707982, lng: 9.169369 }
-    ];
-    this.drawMarkers(markers);
-    this.drawRoute(markers[0], markers[1]);
+    // let markers = [
+    //   { lat: 52.5, lng: 13.4 },
+    //   { lat: 48.707982, lng: 9.169369 }
+    // ];
+    // this.drawMarkers(markers);
+    // this.drawRoute(markers[0], markers[1]);
   }
 
   drawMarkers = (markers = []): void => {
     this.markerGroup = new H.map.Group();
 
-    let markerHTML = '<div class="marker">'+
-      '<div class="marker__icon"></div>'+
-    '</div>';
+    let markerHTML = '<div class="marker">' +
+      '<div class="marker__icon"></div>' +
+      '</div>';
 
     let icon = new H.map.DomIcon(markerHTML);
 
@@ -269,9 +287,9 @@ export class AppComponent {
       // The routing mode:
       'mode': 'fastest;truck',
       // The start point of the route:
-      'waypoint0': 'geo!'+location1.lat+','+location1.lng,
+      'waypoint0': 'geo!' + location1.lat + ',' + location1.lng,
       // The end point of the route:
-      'waypoint1': 'geo!'+location2.lat+','+location2.lng,
+      'waypoint1': 'geo!' + location2.lat + ',' + location2.lng,
       // To retrieve the shape of the route we choose the route
       // representation mode 'display'
       'representation': 'display',
@@ -298,7 +316,7 @@ export class AppComponent {
     // let endPoint;
     let strip;
 
-    if(result.response.route) {
+    if (result.response.route) {
       console.log(result.response.route);
 
       // Pick the first route from the response:
@@ -323,8 +341,11 @@ export class AppComponent {
 
       // Create a polyline to display the route:
       let routeLine = new H.map.Polyline(strip, {
-        style: { strokeColor: 'green', lineWidth: 3 }
+        style: { strokeColor: 'green', lineWidth: 3 },
+        data: { routeInfo: this.transformRouteSummary(route.summary) }
       });
+
+      this.routeLines.push(routeLine);
 
       // Create a marker for the start point:
       // let startMarker = new H.map.Marker({
@@ -343,36 +364,51 @@ export class AppComponent {
       this.map.addObjects([routeLine]);
 
       // Set the map's viewport to make the whole route visible:
-      this.map.setViewBounds(routeLine.getBounds());
+      // this.map.setViewBounds(routeLine.getBounds());
 
       // output summary infos
-      if(route.summary){
+      if (route.summary) {
         this.routeInfo = {
-          distance: Math.ceil(route.summary.distance/1000),
-          travelTime: Math.ceil(route.summary.travelTime/60),
-          trafficTime: Math.ceil(route.summary.trafficTime/60)
+          distance: Math.ceil(route.summary.distance / 1000),
+          travelTime: Math.ceil(route.summary.travelTime / 60),
+          trafficTime: Math.ceil(route.summary.trafficTime / 60)
         };
         // console.log('ETA: '+formatDate(getETA(route.summary.trafficTime), this.datePipe));
       }
 
 
       this.map.addEventListener('tap', (e) => {
-        if(e.target === routeLine){
-          console.log('––> clicked route');
+        if (e.target instanceof H.map.Polyline) {
+          for (var i = this.routeLines.length - 1; i >= 0; i--) {
+            this.routeLines[i].setStyle({ strokeColor: 'green', lineWidth: 3 });
+          }
+          
+          this.routeInfo = e.target['getData']().routeInfo;
           this.showRouteInfo = true;
-          routeLine.setStyle({ strokeColor: 'yellow', lineWidth: 3 });
+          e.target['setStyle']({ strokeColor: 'yellow', lineWidth: 3 });
         }
         else {
           this.showRouteInfo = false;
-          routeLine.setStyle({ strokeColor: 'green', lineWidth: 3 });
+          // routeLine.setStyle({ strokeColor: 'green', lineWidth: 3 });
+          for (var i = this.routeLines.length - 1; i >= 0; i--) {
+            this.routeLines[i].setStyle({ strokeColor: 'green', lineWidth: 3 });
+          }
         }
       });
     }
   }
 
+  transformRouteSummary = (summary) => {
+    return {
+      distance: Math.ceil(summary.distance / 1000),
+      travelTime: Math.ceil(summary.travelTime / 60),
+      trafficTime: Math.ceil(summary.trafficTime / 60)
+    };
+  }
+
   toggleLayer = (layerName): void => {
-    if(layerName === 'gps'){
-      if(this.isGpsLayerVisible){
+    if (layerName === 'gps') {
+      if (this.isGpsLayerVisible) {
         this.map.removeLayer(this.layerGps);
         this.isGpsLayerVisible = false;
       }
@@ -381,8 +417,8 @@ export class AppComponent {
         this.isGpsLayerVisible = true;
       }
     }
-    else if(layerName === 'gps-trace'){
-      if(this.isGpsTraceLayerVisible){
+    else if (layerName === 'gps-trace') {
+      if (this.isGpsTraceLayerVisible) {
         this.map.removeLayer(this.layerGpsTrace);
         this.isGpsTraceLayerVisible = false;
       }
