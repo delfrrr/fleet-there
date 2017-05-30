@@ -31,6 +31,7 @@ export class AppComponent {
   private platform: H.service.Platform;
   private router: any;
   private routeInfo: any;
+  private showRouteInfo: boolean = false;
 
   ngOnInit() {
     this.platform = new H.service.Platform({
@@ -244,6 +245,8 @@ export class AppComponent {
     let strip;
 
     if(result.response.route) {
+      console.log(result.response.route);
+      
       // Pick the first route from the response:
       route = result.response.route[0];
       // console.log(route);
@@ -297,6 +300,19 @@ export class AppComponent {
         };
         // console.log('ETA: '+formatDate(getETA(route.summary.trafficTime), this.datePipe));
       }
+
+
+      this.map.addEventListener('tap', (e) => {
+        if(e.target === routeLine){
+          console.log('––> clicked route');
+          this.showRouteInfo = true;
+          routeLine.setStyle({ strokeColor: 'yellow', lineWidth: 3 });
+        }
+        else {
+          this.showRouteInfo = false;
+          routeLine.setStyle({ strokeColor: 'green', lineWidth: 3 });
+        }
+      });
     }
   }
 
