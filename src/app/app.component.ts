@@ -30,6 +30,7 @@ export class AppComponent {
   private markerGroup: H.map.Group;
   private platform: H.service.Platform;
   private router: any;
+  private routeInfo: any;
 
   ngOnInit() {
     this.platform = new H.service.Platform({
@@ -289,9 +290,11 @@ export class AppComponent {
 
       // output summary infos
       if(route.summary){
-        console.log('distance: '+route.summary.distance/1000+' km');
-        console.log('travelTime: '+route.summary.travelTime/60 + ' minutes');
-        console.log('trafficTime: '+route.summary.trafficTime/60 + ' minutes');
+        this.routeInfo = {
+          distance: Math.ceil(route.summary.distance/1000),
+          travelTime: Math.ceil(route.summary.travelTime/60),
+          trafficTime: Math.ceil(route.summary.trafficTime/60)
+        };
         // console.log('ETA: '+formatDate(getETA(route.summary.trafficTime), this.datePipe));
       }
     }

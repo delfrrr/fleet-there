@@ -1,4 +1,10 @@
 
+body {
+	font-family: 'Helvetica Neue';
+	font-size: 12px;
+	line-height: 1.5;
+}
+
 #map {
 	position: fixed;
 	top: 0;
@@ -7,12 +13,20 @@
 	bottom: 0;
 }
 
-.controls {
+.controls,
+.info {
 	position: absolute;
 	top: 0;
 	right: 0;
 	width: 180px;
 	background: black;
+	padding: 10px;
+}
+
+.info {
+	right: auto;
+	left: 0;
+	background: white;
 }
 
 .btn {

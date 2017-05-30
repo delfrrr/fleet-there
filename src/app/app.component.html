@@ -4,3 +4,9 @@
 	<button class="btn" (click)="toggleLayer('gps')">Toggle GPS Layer</button>
 	<button class="btn" (click)="toggleLayer('gps-trace')">Toggle GPS Trace Layer</button>
 </div>
+
+<div *ngIf="routeInfo" class="info">
+	Distance: {{routeInfo.distance}} km<br>
+	Travel Time: {{routeInfo.travelTime}} minutes<br>
+	Traffic Time: {{routeInfo.trafficTime}} minutes
+</div>
