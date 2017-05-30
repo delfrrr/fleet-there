@@ -51,6 +51,8 @@ export class AppComponent {
     new H.mapevents.Behavior(new H.mapevents.MapEvents(this.map));
     const ui = H.ui.UI.createDefault(this.map, defaultLayers);
 
+
+    // DATASET: GPS TRACE
     let queryIdGpsTrace = '5af379a97e254a158aae22938a6eb508';
     this.service.fetchQueryStats(queryIdGpsTrace, {
       stats: [
@@ -77,7 +79,40 @@ export class AppComponent {
       ), false);
     });
 
+    const providerGpsTrace = new H.datalens.QueryTileProvider(
+      this.service, {
+        queryId: queryIdGpsTrace,
+        tileParamNames: {
+          x: 'x',
+          y: 'y',
+          z: 'z'
+        }
+      }
+    );
 
+    this.layerGpsTrace = new H.datalens.HeatmapLayer(
+      providerGpsTrace, {
+        rowToTilePoint: function(row) {
+          return {
+            x: row.tx,
+            y: row.ty,
+            value: row.count,
+            count: 1
+          };
+        },
+        bandwidth: 2,
+        // TODO: PR for typings
+        colorScale: d3.scaleLinear().domain([0, 1]).range([
+          'rgba(255, 0, 0, 0)',
+          'rgba(255, 0, 0, 1)'
+        ])
+      }
+    );
+
+    this.map.addLayer(this.layerGpsTrace);
+
+
+    // DATASET: GPS
     let queryIdGps = '8ad75113b6b245649202ae2e1bf46099';
     this.service.fetchQueryStats(queryIdGps, {
       stats: [
@@ -104,8 +139,7 @@ export class AppComponent {
       ), false);
     });
 
-
-    const provider = new H.datalens.QueryTileProvider(
+    const providerGps = new H.datalens.QueryTileProvider(
       this.service, {
         queryId: queryIdGps,
         tileParamNames: {
@@ -116,30 +150,9 @@ export class AppComponent {
       }
     );
 
-    this.layerGpsTrace = new H.datalens.HeatmapLayer(
-      provider, {
-        rowToTilePoint: function(row) {
-          return {
-            x: row.tx,
-            y: row.ty,
-            value: row.count,
-            count: 1
-          };
-        },
-        bandwidth: 2,
-        // TODO: PR for typings
-        colorScale: d3.scaleLinear().domain([0, 1]).range([
-          'rgba(255, 0, 0, 0)',
-          'rgba(255, 0, 0, 1)'
-        ])
-      }
-    );
-
-    this.map.addLayer(this.layerGpsTrace);
-
-
     this.layerGps = new H.datalens.HeatmapLayer(
-      provider, {
+      providerGps, {
+        // TODO: fix typings: row: number
         rowToTilePoint: function(row) {
           return {
             x: row.tx,
