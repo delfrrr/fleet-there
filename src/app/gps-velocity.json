@@ -1,0 +1,86 @@
+{
+    "query": {
+        "dataset": "9b802d98e6fc4dfc8f2a96848b2368df",
+        "metrics": [
+            "Latitude",
+            "Longitude",
+            "Vehicleid"
+        ],
+        "namespace": {
+            "buffer": {
+                "source": [
+                    {
+                        "default": 0,
+                        "$input": "buffer"
+                    }
+                ]
+            },
+            "px": {
+                "source": [
+                    "Longitude",
+                    "z"
+                ],
+                "apply": [
+                    {
+                        "type": "transform",
+                        "fn": "lon_to_x"
+                    }
+                ]
+            },
+            "py": {
+                "source": [
+                    "Latitude",
+                    "z"
+                ],
+                "apply": [
+                    {
+                        "type": "transform",
+                        "fn": "lat_to_y"
+                    }
+                ]
+            },
+            "y": {
+                "source": [
+                    {
+                        "$input": "y"
+                    }
+                ]
+            },
+            "x": {
+                "source": [
+                    {
+                        "$input": "x"
+                    }
+                ]
+            },
+            "z": {
+                "source": [
+                    {
+                        "$input": "z"
+                    }
+                ]
+            },
+            "pixels": {
+                "source": [
+                    "px",
+                    "py"
+                ]
+            }
+        },
+        "filters": [
+            {
+                "pixels": {
+                    "$pixel_within_tile": [
+                        "x",
+                        "y",
+                        "buffer"
+                    ]
+                },
+                "Velocity": {
+                    "$eq": 0
+                }
+            }
+        ]
+    },
+    "description": ""
+}

@@ -25,6 +25,7 @@ export class AppComponent {
   private map: H.Map;
   private layerGps: H.datalens.HeatmapLayer;
   private layerGpsTrace: H.datalens.HeatmapLayer;
+  private layerStopPoints: H.datalens.ObjectLayer;
   private isGpsLayerVisible: boolean = true;
   private isGpsTraceLayerVisible: boolean = true;
   private markerGroup: H.map.Group;
@@ -120,7 +121,7 @@ export class AppComponent {
       }
     );
 
-    this.map.addLayer(this.layerGpsTrace);
+    // this.map.addLayer(this.layerGpsTrace);
 
 
     // DATASET: GPS
@@ -181,6 +182,42 @@ export class AppComponent {
     );
 
     this.map.addLayer(this.layerGps);
+
+
+
+    // STOP POINTS
+    let stopPointsIdGps = 'ead20d99ce5f4b14957e4f4775388468';
+
+    const providerStopPoints = new H.datalens.QueryTileProvider(
+      this.service, {
+        queryId: stopPointsIdGps,
+        tileParamNames: {
+          x: 'x',
+          y: 'y',
+          z: 'z'
+        }
+      }
+    );
+
+    this.layerStopPoints = new H.datalens.ObjectLayer(
+      providerStopPoints, {
+        rowToMapObject: function(cluster){
+          return new H.map.Marker(cluster.getPosition());
+        },
+        clustering: {
+          rowToDataPoint: function(row) {
+            return new H.clustering.DataPoint(row.latitude, row.longitude, 1);
+          },
+          options: function(){
+            return {
+              eps: 50 * devicePixelRatio //px
+            };
+          }
+        }
+      }
+    );
+
+    this.map.addLayer(this.layerStopPoints);
 
 
     // MARKERS
@@ -246,7 +283,7 @@ export class AppComponent {
 
     if(result.response.route) {
       console.log(result.response.route);
-      
+
       // Pick the first route from the response:
       route = result.response.route[0];
       // console.log(route);
