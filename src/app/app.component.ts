@@ -67,7 +67,6 @@ export class AppComponent {
         }
       ]
     }).then(({ stats }) => {
-      console.log(stats);
       const columnStats = stats[0].column_stats;
 
       this.map.setViewBounds(new H.geo.Rect(
@@ -95,7 +94,6 @@ export class AppComponent {
         }
       ]
     }).then(({ stats }) => {
-      console.log(stats);
       const columnStats = stats[0].column_stats;
 
       this.map.setViewBounds(new H.geo.Rect(
