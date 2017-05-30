@@ -180,17 +180,21 @@ export class AppComponent {
     if(layerName === 'gps'){
       if(this.isGpsLayerVisible){
         this.map.removeLayer(this.layerGps);
+        this.isGpsLayerVisible = false;
       }
       else {
         this.map.addLayer(this.layerGps);
+        this.isGpsLayerVisible = true;
       }
     }
     else if(layerName === 'gps-trace'){
       if(this.isGpsTraceLayerVisible){
         this.map.removeLayer(this.layerGpsTrace);
+        this.isGpsTraceLayerVisible = false;
       }
       else {
-        this.map.addLayer(this.layerGpsTrace); 
+        this.map.addLayer(this.layerGpsTrace);
+        this.isGpsTraceLayerVisible = true;
       }
     }
   }
