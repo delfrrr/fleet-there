@@ -36,15 +36,13 @@
     </ul>
     <ul class="gain-loss">
       <li class="value here">&nbsp;</li>
-      <li class="value driver negative">+20min</li>
+      <!-- <li class="value driver negative">+20min</li>
       <li class="value driver negative">+10min</li>
-      <li class="value driver positive">-10min</li>
+      <li class="value driver positive">-10min</li> -->
     </ul>
     <ul class="time">
       <li class="value here">{{chartData.travelTimes[0]}} min</li>
-      <li class="value driver">2hr 56 min</li>
-      <li class="value driver">2hr 46 min</li>
-      <li class="value driver">2hr 26 min</li>
+      <li class="value driver" *ngFor="let time of chartDataTrips">{{time}} min</li>
     </ul>
   </div>
 </div>

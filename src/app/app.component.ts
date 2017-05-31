@@ -35,9 +35,10 @@ export class AppComponent {
   private showRouteInfo: boolean = false;
   private showChart: boolean = false;
 
-  private tmpRouteMarkers: any[] = [];
+  private stopClusters: any[] = [];
   private routeLines: any[] = [];
   private chartData: any = {};
+  private chartDataTrips: any = [];
 
   ngOnInit() {
     this.platform = new H.service.Platform({
@@ -242,14 +243,49 @@ export class AppComponent {
 
     this.map.addEventListener('tap', (e) => {
       // if(e.target instanceof H.map.Object){
-      if(e.target instanceof H.map.Marker){
+      if (e.target instanceof H.map.Marker) {
         // let target = e.target as H.map.Object;
         console.log(e.target['getData']().getPosition());
-        this.tmpRouteMarkers.push(e.target['getData']().getPosition());
+        this.stopClusters.push(e.target['getData']());
 
-        if(this.tmpRouteMarkers.length === 2){
-          this.drawRoute(this.tmpRouteMarkers[0], this.tmpRouteMarkers[1]);
-          this.tmpRouteMarkers = [];
+        if (this.stopClusters.length === 2) {
+          this.drawRoute(this.stopClusters[0].getPosition(), this.stopClusters[1].getPosition());
+          const tripsA = this.getTrips(this.stopClusters[0]);
+          const tripsB = this.getTrips(this.stopClusters[1]);
+
+          let travelTimes = [];
+
+          Object.keys(tripsA).forEach((tripId) => {
+            if (tripsB[tripId]) {
+              const tripA = tripsA[tripId];
+              const tripB = tripsB[tripId];
+
+              let tsA = tripA.timestamp; // 2015-10-23-16.13.00.000000
+              let tsB = tripB.timestamp; // 2015-10-23-16.13.00.000000
+              let tsAparts = tsA.split(/[.-]/);
+              let tsBparts = tsB.split(/[.-]/);
+
+              let dateA = new Date(tsAparts[0] + '-' + tsAparts[1] + '-' + tsAparts[2] + 'T' + tsAparts[3] + ':' + tsAparts[4]);
+              let dateB = new Date(tsBparts[0] + '-' + tsBparts[1] + '-' + tsBparts[2] + 'T' + tsBparts[3] + ':' + tsBparts[4]);
+
+              let duration = dateA.getTime() - dateB.getTime();
+              let formattedDuration = this.formatDuration(Math.abs(duration) / 1000);
+
+              console.log('duration = ' + formattedDuration);
+              travelTimes.push(formattedDuration);
+            }
+          });
+
+          travelTimes.sort();
+          console.log('––> amount trips: '+travelTimes.length);
+
+          if(travelTimes.length > 3){
+            travelTimes = travelTimes.slice(0, 3);
+          }
+
+          console.log(travelTimes);
+          this.chartDataTrips = travelTimes;
+          this.stopClusters = [];
         }
       }
     });
@@ -264,6 +300,25 @@ export class AppComponent {
     // ];
     // this.drawMarkers(markers);
     // this.drawRoute(markers[0], markers[1]);
+  }
+
+  formatDuration = (date): number => {
+    return date / 60;
+    // return `${
+    //   Math.ceil(date / 3600 / 24)
+    // } days ${
+    //   Math.ceil((date % (3600 * 24)) / 3600)
+    // } hours ${
+    //   Math.ceil((date % (3600 * 24 * 60)) / 60)
+    // } minutes`;
+  }
+
+  getTrips = (cluster) => {
+    const result = {};
+    cluster.forEachDataPoint((dataPoint) => {
+      result[dataPoint.getData().tripid] = dataPoint.getData();
+    });
+    return result;
   }
 
   drawMarkers = (markers = []): void => {
@@ -379,6 +434,9 @@ export class AppComponent {
           travelTime: Math.ceil(route.summary.travelTime / 60),
           trafficTime: Math.ceil(route.summary.trafficTime / 60)
         };
+
+        console.log('HERE duration = ' + route.summary.trafficTime);
+        console.log('HERE duration = ' + this.formatDuration(route.summary.trafficTime));
         // console.log('ETA: '+formatDate(getETA(route.summary.trafficTime), this.datePipe));
       }
 
